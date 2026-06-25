@@ -1,0 +1,28 @@
+Django==5.2.6
+phidata
+openai
+groq
+python-dotenv
+yfinance
+duckduckgo-search
+requests
+django-cors-headers==4.6.0
+PyMySQL==1.1.1
+
+# File processing dependencies
+PyPDF2
+python-docx
+pandas
+openpyxl
+
+# Forecasting dependencies
+prophet
+matplotlib
+seaborn
+numpy
+
+# OCR dependencies
+pytesseract
+Pillow
+opencv-python
+

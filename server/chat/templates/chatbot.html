@@ -1,0 +1,1135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizPilot AI Chat</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Theme variables that respect light/dark mode */
+        :root {
+            --bp-bg: #ffffff;
+            --bp-panel: #f8f9fa;
+            --bp-elev: #ffffff;
+            --bp-text: #1a1a1a;
+            --bp-muted: #6c757d;
+            --bp-accent: #007bff;
+            --bp-accent-2: #0056b3;
+            --bp-success: #22c55e;
+            --bp-danger: #ef4444;
+            --bp-border: rgba(0,0,0,0.1);
+        }
+        
+        [data-theme="dark"] {
+            --bp-bg: #0b1020;
+            --bp-panel: #11162a;
+            --bp-elev: #151c35;
+            --bp-text: #e6ebff;
+            --bp-muted: #a9b3d1;
+            --bp-accent: #6c8bff;
+            --bp-accent-2: #9b72ff;
+            --bp-success: #22c55e;
+            --bp-danger: #ef4444;
+            --bp-border: rgba(255,255,255,0.08);
+        }
+        
+        body {
+            background: var(--bp-bg);
+            color: var(--bp-text);
+            transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] body {
+            background: radial-gradient(1200px 600px at 80% -10%, rgba(108,139,255,0.18), transparent 60%),
+                        radial-gradient(800px 400px at -10% 10%, rgba(155,114,255,0.18), transparent 60%),
+                        var(--bp-bg);
+        }
+        
+        .header {
+            backdrop-filter: saturate(160%) blur(8px);
+            background: var(--bp-panel);
+            border-bottom: 1px solid var(--bp-border);
+            transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] .header {
+            background: linear-gradient(180deg, rgba(17,22,42,0.9), rgba(17,22,42,0.7));
+        }
+        
+        .logo {
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            color: var(--bp-text);
+        }
+        .chat-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px;
+            gap: 12px;
+        }
+        .chat-messages {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] .chat-messages {
+            background: linear-gradient(180deg, rgba(21,28,53,0.7), rgba(21,28,53,0.5));
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+        
+            padding: 20px 16px;
+        }
+        .welcome-message {
+            text-align: center;
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] .welcome-message {
+            background: linear-gradient(145deg, rgba(108,139,255,0.1), rgba(155,114,255,0.1));
+        }
+        
+        .suggestions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .suggestion {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--bp-text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        [data-theme="dark"] .suggestion {
+            background: linear-gradient(145deg, rgba(21,28,53,0.8), rgba(17,22,42,0.8));
+        }
+        
+        .suggestion:hover {
+            border-color: var(--bp-accent);
+            transform: translateY(-2px);
+            background: var(--bp-accent);
+            color: white;
+        }
+        
+        [data-theme="dark"] .suggestion:hover {
+            background: linear-gradient(145deg, rgba(108,139,255,0.15), rgba(155,114,255,0.15));
+            color: var(--bp-text);
+        }
+        
+        .input-wrapper {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] .input-wrapper {
+            background: linear-gradient(145deg, rgba(21,28,53,0.9), rgba(17,22,42,0.9));
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        
+        .input-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .file-upload-btn, .voice-btn {
+            background: none;
+            border: 1px solid var(--bp-border);
+            color: var(--bp-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-btn:hover, .voice-btn:hover {
+            color: var(--bp-accent);
+            border-color: var(--bp-accent);
+            background: var(--bp-accent);
+            color: white;
+        }
+        
+        .voice-btn.recording {
+            background: var(--bp-danger);
+            border-color: var(--bp-danger);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .message-input {
+            flex: 1;
+            background: transparent;
+            color: var(--bp-text);
+            border: none;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 120px;
+            min-height: 24px;
+            outline: none;
+            font-family: inherit;
+        }
+        .message-input::placeholder {
+            color: var(--bp-muted);
+        }
+        .send-button {
+            background: var(--bp-accent);
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        [data-theme="dark"] .send-button {
+            background: linear-gradient(145deg, var(--bp-accent), var(--bp-accent-2));
+            box-shadow: 0 2px 8px rgba(108,139,255,0.3);
+        }
+        
+        .send-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        [data-theme="dark"] .send-button:hover:not(:disabled) {
+            background: linear-gradient(145deg, #5a7dff, #8965ff);
+            box-shadow: 0 4px 12px rgba(108,139,255,0.4);
+        }
+        
+        .message.user .message-content {
+            background: var(--bp-accent);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        [data-theme="dark"] .message.user .message-content {
+            background: linear-gradient(145deg, var(--bp-accent), var(--bp-accent-2));
+            box-shadow: 0 2px 8px rgba(108,139,255,0.3);
+        }
+        
+        .message.bot .message-content {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            color: var(--bp-text);
+        }
+        
+        [data-theme="dark"] .message.bot .message-content {
+            background: linear-gradient(145deg, rgba(21,28,53,0.9), rgba(17,22,42,0.9));
+        }
+        
+        /* Enhanced formatting for AI responses */
+        .message.bot .message-content h1,
+        .message.bot .message-content h2,
+        .message.bot .message-content h3 {
+            border-bottom: 2px solid var(--bp-accent);
+            padding-bottom: 4px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .message.bot .message-content ul {
+            background: rgba(0,123,255,0.05);
+            border-left: 3px solid var(--bp-accent);
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        [data-theme="dark"] .message.bot .message-content ul {
+            background: rgba(108,139,255,0.08);
+        }
+        
+        .message.bot .message-content li {
+            padding: 2px 0;
+            line-height: 1.4;
+        }
+        
+        .message.bot .message-content strong {
+            background: linear-gradient(120deg, var(--bp-accent), var(--bp-accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Fix avatar alignment issues */
+        .avatar {
+            background: var(--bp-accent);
+            border: 2px solid var(--bp-border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        [data-theme="dark"] .avatar {
+            background: linear-gradient(145deg, var(--bp-accent), var(--bp-accent-2));
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .typing-dots {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+        }
+        
+        [data-theme="dark"] .typing-dots {
+            background: linear-gradient(145deg, rgba(21,28,53,0.9), rgba(17,22,42,0.9));
+        }
+        
+        .file-info {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .file-remove {
+            background: var(--bp-danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        
+            border: 2px solid var(--bp-border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .typing-dots {
+            background: linear-gradient(145deg, rgba(21,28,53,0.9), rgba(17,22,42,0.9));
+            border: 1px solid var(--bp-border);
+        }
+        
+        /* Chart container styles */
+        .chart-container {
+            background: var(--bp-elev);
+            border: 1px solid var(--bp-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 12px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .chart-container {
+            background: linear-gradient(145deg, rgba(21,28,53,0.7), rgba(21,28,53,0.5));
+        }
+        
+        .chart-title {
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--bp-text);
+            text-align: center;
+        }
+        
+        .chart-canvas {
+            max-width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <!-- Left side - Menu button -->
+        <div class="header-left">
+            <button class="menu-button" onclick="toggleMenu()" title="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/>
+                </svg>
+            </button>
+            <div class="menu-dropdown" id="menuDropdown">
+                <div class="menu-item" onclick="createNewChat()">
+                    <span class="menu-icon">💬</span>
+                    New Chat
+                </div>
+                <div class="menu-item" onclick="showPastChats()">
+                    <span class="menu-icon">📝</span>
+                    Chat History
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="showSettings()">
+                    <span class="menu-icon">⚙️</span>
+                    Settings
+                </div>
+            </div>
+        </div>
+
+        <!-- Center - Logo -->
+        <div class="logo">🚀 BizPilot AI</div>
+
+        <!-- Right side - Theme toggle and Profile -->
+        <div class="header-right">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙 Dark Mode</button>
+            <button class="profile-button" onclick="toggleProfile()" title="Profile">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                </svg>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-header">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-info">
+                        <div class="profile-name">John Doe</div>
+                        <div class="profile-email">john@example.com</div>
+                    </div>
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="showProfile()">
+                    <span class="menu-icon">👤</span>
+                    View Profile
+                </div>
+                <div class="menu-item" onclick="showAccount()">
+                    <span class="menu-icon">⚙️</span>
+                    Account Settings
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="logout()">
+                    <span class="menu-icon">🚪</span>
+                    Logout
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h2>Welcome to BizPilot AI</h2>
+                <p>Your intelligent business assistant. How can I help you today?</p>
+                <div class="suggestions">
+                    <div class="suggestion" onclick="sendSuggestion('Help me create a business plan')">📋 Business Plan</div>
+                    <div class="suggestion" onclick="sendSuggestion('Show me a 6-month revenue chart')">📊 Revenue Chart</div>
+                    <div class="suggestion" onclick="document.getElementById('fileInput').click()">� Upload & Analyze</div>
+                    <div class="suggestion" onclick="sendSuggestion('Marketing strategy ideas')">📈 Marketing Strategy</div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="avatar bot">🤖</div>
+                <div class="typing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div id="fileInfo" class="file-info" style="display: none;">
+                <span id="fileName"></span>
+                <button class="file-remove" onclick="removeFile()" title="Remove file">×</button>
+            </div>
+            <div class="input-wrapper">
+                <div class="input-actions">
+                    <button class="file-upload-btn" onclick="triggerFileUpload()" title="Upload file">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                        </svg>
+                    </button>
+                    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp" style="display: none;" onchange="handleFileSelect(event)">
+                    
+                    <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="Voice input">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <textarea 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    rows="1"
+                    onkeydown="handleKeyPress(event)"
+                    oninput="autoResize(this)"
+                ></textarea>
+                
+                <button class="send-button" id="sendButton" onclick="sendMessage()" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let messageCount = 0;
+        const DJANGO_CHAT_API = '/api/chat/';
+        
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeToggle.innerHTML = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function toggleMenu() {
+            const menuDropdown = document.getElementById('menuDropdown');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            // Close profile dropdown if open
+            profileDropdown.classList.remove('show');
+            
+            // Toggle menu dropdown
+            menuDropdown.classList.toggle('show');
+        }
+
+        function toggleProfile() {
+            const profileDropdown = document.getElementById('profileDropdown');
+            const menuDropdown = document.getElementById('menuDropdown');
+            
+            // Close menu dropdown if open
+            menuDropdown.classList.remove('show');
+            
+            // Toggle profile dropdown
+            profileDropdown.classList.toggle('show');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const menuButton = document.querySelector('.menu-button');
+            const profileButton = document.querySelector('.profile-button');
+            const menuDropdown = document.getElementById('menuDropdown');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
+                menuDropdown.classList.remove('show');
+            }
+            
+            if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        // Menu functions
+        function createNewChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="welcome-message">
+                    <h2>Welcome to BizPilot AI</h2>
+                    <p>Your intelligent business assistant. How can I help you today?</p>
+                    <div class="suggestions">
+                        <div class="suggestion" onclick="sendSuggestion('Help me create a business plan')">📋 Business Plan</div>
+                        <div class="suggestion" onclick="sendSuggestion('Show me a 6-month revenue chart')">📊 Revenue Chart</div>
+                        <div class="suggestion" onclick="document.getElementById('fileInput').click()">� Upload & Analyze</div>
+                        <div class="suggestion" onclick="sendSuggestion('Marketing strategy ideas')">📈 Marketing Strategy</div>
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="avatar bot">🤖</div>
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('menuDropdown').classList.remove('show');
+        }
+
+        function showPastChats() {
+            alert('Past chats feature coming soon!');
+            document.getElementById('menuDropdown').classList.remove('show');
+        }
+
+        function showSettings() {
+            alert('Settings panel coming soon!');
+            document.getElementById('menuDropdown').classList.remove('show');
+        }
+
+        // Profile functions
+        function showProfile() {
+            alert('Profile page coming soon!');
+            document.getElementById('profileDropdown').classList.remove('show');
+        }
+
+        function showAccount() {
+            alert('Account settings coming soon!');
+            document.getElementById('profileDropdown').classList.remove('show');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                alert('Logout functionality coming soon!');
+            }
+            document.getElementById('profileDropdown').classList.remove('show');
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️ Light Mode';
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            hideWelcomeMessage();
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            
+            try {
+                // Call Django API
+                const response = await fetch(DJANGO_CHAT_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    hideTypingIndicator();
+                    addBotReplyWithRoadmap(data);
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        }
+
+        function sendSuggestion(suggestion) {
+            hideWelcomeMessage();
+            addMessage(suggestion, 'user');
+            
+            // Use the same API call as sendMessage
+            sendMessageToAPI(suggestion);
+        }
+
+        async function sendMessageToAPI(message) {
+            const requestId = Date.now(); // Unique ID for this request
+            console.log(`[${requestId}] Sending message:`, message);
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch(DJANGO_CHAT_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`[${requestId}] API Response received:`, data);
+                    console.log(`[${requestId}] Does response have roadmap?`, !!data.roadmap);
+                    if (data.roadmap) {
+                        console.log(`[${requestId}] Roadmap data:`, data.roadmap);
+                    }
+                    hideTypingIndicator();
+                    addBotReplyWithRoadmap(data);
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        }
+
+        function formatMarkdownContent(text) {
+            // Convert markdown to HTML for better formatting
+            let formatted = text
+                // Headers
+                .replace(/^### (.*$)/gm, '<h3 style="color: var(--bp-accent); margin: 16px 0 8px 0; font-size: 1.1em;">$1</h3>')
+                .replace(/^## (.*$)/gm, '<h2 style="color: var(--bp-accent); margin: 20px 0 12px 0; font-size: 1.3em;">$1</h2>')
+                .replace(/^# (.*$)/gm, '<h1 style="color: var(--bp-accent); margin: 24px 0 16px 0; font-size: 1.5em;">$1</h1>')
+                
+                // Bold text
+                .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--bp-accent);">$1</strong>')
+                
+                // Bullet points
+                .replace(/^\* (.*$)/gm, '<li style="margin: 4px 0;">$1</li>')
+                
+                // Numbers/Revenue projections 
+                .replace(/\$([0-9,]+)/g, '<span style="color: var(--bp-success); font-weight: 600;">$$1</span>')
+                
+                // Convert line breaks to proper spacing
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+            
+            // Wrap bullet points in proper lists
+            formatted = formatted.replace(/(<li[^>]*>.*?<\/li>)/gs, function(match) {
+                if (!match.includes('<ul>')) {
+                    return '<ul style="margin: 8px 0; padding-left: 20px;">' + match.replace(/(<\/li>)(<li)/g, '$1$2') + '</ul>';
+                }
+                return match;
+            });
+            
+            return formatted;
+        }
+
+        function addMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${sender}`;
+            avatar.textContent = sender === 'user' ? '👤' : '🤖';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            // Check if bot message contains chart data
+            if (sender === 'bot' && typeof text === 'object' && text.type === 'chart') {
+                content.innerHTML = `<div class="chart-title">${text.title}</div>`;
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'chart-container';
+                const canvas = document.createElement('canvas');
+                canvas.className = 'chart-canvas';
+                canvas.id = 'chart-' + Date.now();
+                chartContainer.appendChild(canvas);
+                content.appendChild(chartContainer);
+                
+                // Render chart after DOM is updated
+                setTimeout(() => renderChart(canvas.id, text.data), 100);
+            }
+            // Format bot messages with markdown, keep user messages as plain text
+            else if (sender === 'bot') {
+                content.innerHTML = formatMarkdownContent(text);
+            } else {
+                content.textContent = text;
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Add bot reply and handle special content (roadmap, chart, etc.)
+        function addBotReplyWithRoadmap(replyObj) {
+            console.log('addBotReplyWithRoadmap called with:', replyObj);
+            
+            // Handle chart responses
+            if (replyObj.meta && replyObj.meta.has_chart) {
+                addMessage(replyObj.reply, 'bot');
+                // Add explanation text if present
+                if (replyObj.explanation) {
+                    addMessage(replyObj.explanation, 'bot');
+                }
+                return;
+            }
+            
+            // Handle regular responses
+            addMessage(replyObj.reply, 'bot');
+            
+            // Handle roadmap responses
+            if (replyObj.roadmap && Array.isArray(replyObj.roadmap)) {
+                console.log('Roadmap found, creating roadmap display');
+                const chatMessages = document.getElementById('chatMessages');
+                const roadmapDiv = document.createElement('div');
+                roadmapDiv.className = 'message bot';
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar bot';
+                avatar.textContent = '🤖';
+                const content = document.createElement('div');
+                content.className = 'message-content';
+                content.innerHTML = '<strong>6-Month Roadmap:</strong><ol style="margin:8px 0 0 18px;">' +
+                    replyObj.roadmap.map(m => `<li><b>Month ${m.month}:</b> ${m.tasks.join(', ')}</li>`).join('') +
+                    '</ol>';
+                roadmapDiv.appendChild(avatar);
+                roadmapDiv.appendChild(content);
+                chatMessages.appendChild(roadmapDiv);
+                scrollToBottom();
+            } else {
+                console.log('No roadmap found in response:', replyObj);
+            }
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.add('show');
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.remove('show');
+        }
+
+        function hideWelcomeMessage() {
+            const welcome = document.querySelector('.welcome-message');
+            if (welcome) {
+                welcome.style.display = 'none';
+            }
+        }
+
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function renderChart(canvasId, chartData) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Get theme colors
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#e6ebff' : '#1a1a1a';
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+            
+            const chartConfig = {
+                type: chartData.type || 'bar',
+                data: {
+                    labels: chartData.labels || [],
+                    datasets: chartData.datasets || []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: textColor
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: textColor
+                            },
+                            grid: {
+                                color: gridColor
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: textColor
+                            },
+                            grid: {
+                                color: gridColor
+                            }
+                        }
+                    }
+                }
+            };
+            
+            new Chart(ctx, chartConfig);
+        }
+
+        // Function to get CSRF token for Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // File upload functionality
+        let selectedFile = null;
+
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                const fileInfo = document.getElementById('fileInfo');
+                const fileName = document.getElementById('fileName');
+                
+                // Get appropriate icon based on file type
+                const fileIcon = getFileIcon(file.name);
+                
+                fileName.textContent = `${fileIcon} ${file.name} (${formatFileSize(file.size)})`;
+                fileInfo.style.display = 'flex';
+            }
+        }
+
+        function getFileIcon(filename) {
+            const extension = filename.toLowerCase().split('.').pop();
+            
+            switch (extension) {
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                case 'bmp':
+                case 'tiff':
+                case 'webp':
+                    return '🖼️';
+                case 'pdf':
+                    return '📕';
+                case 'doc':
+                case 'docx':
+                    return '📘';
+                case 'csv':
+                case 'xlsx':
+                case 'xls':
+                    return '📊';
+                case 'txt':
+                    return '📝';
+                default:
+                    return '📄';
+            }
+        }
+
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Voice recording functionality
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        function toggleVoiceRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    processVoiceInput(audioBlob);
+                    
+                    // Stop all tracks to release microphone
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.classList.add('recording');
+                voiceBtn.title = 'Stop recording';
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.classList.remove('recording');
+                voiceBtn.title = 'Voice input';
+            }
+        }
+
+        function processVoiceInput(audioBlob) {
+            // For now, just add a message indicating voice was recorded
+            // In a real implementation, you'd send this to a speech-to-text service
+            addMessage('🎤 Voice message recorded (Speech-to-text integration needed)', 'user');
+            
+            // Simulate processing
+            showTypingIndicator();
+            setTimeout(() => {
+                hideTypingIndicator();
+                addMessage('I received your voice message! Speech-to-text processing will be implemented in the next version.', 'bot');
+            }, 1500);
+        }
+
+        // Enhanced send message function to handle files
+        async function sendMessageWithFile() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '' && !selectedFile) return;
+            
+            hideWelcomeMessage();
+            
+            // Add user message
+            if (message) {
+                addMessage(message, 'user');
+            }
+            
+            // Add file info if file is selected
+            if (selectedFile) {
+                addMessage(`📄 Uploaded: ${selectedFile.name}`, 'user');
+            }
+            
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            
+            try {
+                if (selectedFile) {
+                    // Send file to upload API
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    formData.append('message', message || 'Please analyze this file');
+                    
+                    const response = await fetch('/api/upload/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('File analysis response:', data);
+                        hideTypingIndicator();
+                        addMessage(data.reply, 'bot');
+                    } else {
+                        throw new Error('File upload failed');
+                    }
+                    
+                } else {
+                    // Regular text message - use existing chat API
+                    const response = await fetch(DJANGO_CHAT_API, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        hideTypingIndicator();
+                        addBotReplyWithRoadmap(data);  // Use roadmap function instead of plain addMessage
+                    } else {
+                        throw new Error('API request failed');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            } finally {
+                // Clean up file selection
+                removeFile();
+            }
+        }
+
+        // Update the original sendMessage function
+        async function sendMessage() {
+            await sendMessageWithFile();
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', initializeTheme);
+
+        // Focus input on page load
+        window.addEventListener('load', () => {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
+</body>
+</html>

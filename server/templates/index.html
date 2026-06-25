@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizPilot - AI-Powered Business Assistant</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <!-- Floating Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>BizPilot</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="#demo" class="nav-link">See Demo</a>
+                <a href="#comparison" class="nav-link">Comparison</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="{% url 'main:login' %}" class="nav-link login-btn">Log In / Sign Up</a>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+                <span id="themeText">🌙</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Transform Your Business with AI-Powered Intelligence</h1>
+            <p class="hero-subtitle">Experience the future of business automation with BizPilot - Your intelligent assistant for streamlined operations and enhanced productivity</p>
+            <div class="hero-buttons">
+                <a href="#demo" class="btn btn-primary">Try BizPilot</a>
+                <a href="#pricing" class="btn btn-secondary">View Pricing</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="demo" id="demo">
+        <div class="container">
+            <h2 class="section-title">See Demo</h2>
+            <div class="demo-content">
+                <div class="demo-image">
+                    <img src="{% static 'images/L1.png' %}" alt="BizPilot Chatbot Interface" class="demo-screenshot" id="demoScreenshot">
+                </div>
+                <div class="demo-text">
+                    <h3>Easy to Use, Ready to Transform</h3>
+                    <p>Turn your business ideas into reality with our intuitive AI interface. Simply chat, upload files, and watch as BizPilot handles complex tasks with ease.</p>
+                    <ul class="demo-features">
+                        <li>✨ Voice input support</li>
+                        <li>📄 File upload capability</li>
+                        <li>🌙 Dark/Light mode themes</li>
+                        <li>⚡ Lightning-fast responses</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="comparison" id="comparison">
+        <div class="container">
+            <h2 class="section-title">Why Choose BizPilot?</h2>
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <h3>BizPilot</h3>
+                    <div class="feature-list">
+                        <div class="feature">✅ Business-focused AI</div>
+                        <div class="feature">✅ File upload & processing</div>
+                        <div class="feature">✅ Voice input support</div>
+                        <div class="feature">✅ Custom integrations</div>
+                        <div class="feature">✅ Multi-language support</div>
+                        <div class="feature">✅ 24/7 availability</div>
+                    </div>
+                    <div class="price">Starting at $0/month</div>
+                </div>
+                
+                <div class="comparison-card">
+                    <h3>ChatGPT</h3>
+                    <div class="feature-list">
+                        <div class="feature">✅ General purpose AI</div>
+                        <div class="feature">❌ Limited file support</div>
+                        <div class="feature">❌ No voice input</div>
+                        <div class="feature">❌ Basic integrations</div>
+                        <div class="feature">✅ Multi-language support</div>
+                        <div class="feature">⚠️ Usage limits</div>
+                    </div>
+                    <div class="price">$20/month</div>
+                </div>
+                
+                <div class="comparison-card">
+                    <h3>Other AI Tools</h3>
+                    <div class="feature-list">
+                        <div class="feature">⚠️ Limited business focus</div>
+                        <div class="feature">❌ No file processing</div>
+                        <div class="feature">❌ Text only</div>
+                        <div class="feature">❌ No custom integrations</div>
+                        <div class="feature">⚠️ Limited languages</div>
+                        <div class="feature">❌ Restricted availability</div>
+                    </div>
+                    <div class="price">$15-50/month</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2 class="section-title">Choose Your Plan</h2>
+            <div class="pricing-grid">
+                <!-- Starter Plan -->
+                <div class="pricing-card">
+                    <div class="plan-header">
+                        <h3>Starter</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">0</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <ul>
+                            <li>✅ 1,000 AI conversations/month</li>
+                            <li>✅ Basic file upload (PDF, DOC)</li>
+                            <li>✅ Email support</li>
+                            <li>✅ Standard integrations</li>
+                            <li>✅ Mobile app access</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-outline">Get Started</button>
+                </div>
+
+                <!-- Professional Plan -->
+                <div class="pricing-card featured">
+                    <div class="featured-badge">Most Popular</div>
+                    <div class="plan-header">
+                        <h3>Professional</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">9.99</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <ul>
+                            <li>✅ Unlimited AI conversations</li>
+                            <li>✅ Advanced file processing</li>
+                            <li>✅ Priority support</li>
+                            <li>✅ Custom integrations</li>
+                            <li>✅ Team collaboration</li>
+                            <li>✅ Analytics dashboard</li>
+                            <li>✅ API access</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary">Start Free Trial</button>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="pricing-card">
+                    <div class="plan-header">
+                        <h3>Enterprise</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">49.99</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <ul>
+                            <li>✅ Everything in Professional</li>
+                            <li>✅ Dedicated support team</li>
+                            <li>✅ Custom AI training</li>
+                            <li>✅ On-premise deployment</li>
+                            <li>✅ SLA guarantees</li>
+                            <li>✅ Advanced security</li>
+                            <li>✅ White-label options</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-outline">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>BizPilot</h3>
+                    <p>Transforming businesses with AI-powered intelligence.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#demo">Demo</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#comparison">Comparison</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 BizPilot. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const themeText = document.getElementById('themeText');
+        const demoScreenshot = document.getElementById('demoScreenshot');
+        const body = document.body;
+
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', currentTheme);
+        updateThemeText(currentTheme);
+        updateDemoScreenshot(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeText(newTheme);
+            updateDemoScreenshot(newTheme);
+        });
+
+        function updateThemeText(theme) {
+            if (theme === 'dark') {
+                themeText.textContent = '☀️';
+            } else {
+                themeText.textContent = '🌙';
+            }
+        }
+
+        function updateDemoScreenshot(theme) {
+            if (theme === 'dark') {
+                demoScreenshot.src = "{% static 'images/L2.png' %}";
+                demoScreenshot.alt = 'BizPilot Chatbot Interface - Dark Mode';
+            } else {
+                demoScreenshot.src = "{% static 'images/L1.png' %}";
+                demoScreenshot.alt = 'BizPilot Chatbot Interface - Light Mode';
+            }
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>

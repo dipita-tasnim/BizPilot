@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizPilot AI Chat</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Lightweight modern polish without touching external stylesheet */
+        :root {
+            --bp-bg: #0b1020;
+            --bp-panel: #11162a;
+            --bp-elev: #151c35;
+            --bp-text: #e6ebff;
+            --bp-muted: #a9b3d1;
+            --bp-accent: #6c8bff;
+            --bp-accent-2: #9b72ff;
+            --bp-success: #22c55e;
+            --bp-danger: #ef4444;
+            --bp-border: rgba(255,255,255,0.08);
+        }
+        /* Intentionally left blank: relies on existing data-theme toggle in external CSS */
+        body {
+            background: radial-gradient(1200px 600px at 80% -10%, rgba(108,139,255,0.18), transparent 60%),
+                        radial-gradient(800px 400px at -10% 10%, rgba(155,114,255,0.18), transparent 60%),
+                        var(--bp-bg);
+            color: var(--bp-text);
+        }
+        .header {
+            backdrop-filter: saturate(160%) blur(8px);
+            background: linear-gradient(180deg, rgba(17,22,42,0.9), rgba(17,22,42,0.7));
+            border-bottom: 1px solid var(--bp-border);
+        }
+        .logo {
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            color: var(--bp-text);
+        }
+        .chat-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px;
+            gap: 12px;
+        }
+        .chat-messages {
+            background: linear-gradient(180deg, rgba(21,28,53,0.7), rgba(21,28,53,0.5));
+            border: 1px solid var(--bp-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+            padding: 20px 16px;
+        }
+        .message.bot .message-content {
+            background: rgba(108,139,255,0.08);
+            border: 1px solid var(--bp-border);
+        }
+        .message.user .message-content {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--bp-border);
+        }
+        .suggestions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        .suggestion {
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+            border: 1px solid var(--bp-border);
+            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+        }
+        .suggestion:hover {
+            transform: translateY(-1px);
+            border-color: rgba(108,139,255,0.45);
+            background: linear-gradient(180deg, rgba(108,139,255,0.12), rgba(255,255,255,0.04));
+        }
+        .input-container {
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(11,16,32,0), var(--bp-bg) 60%);
+            padding-top: 6px;
+        }
+        .input-wrapper {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            align-items: end;
+            gap: 8px;
+            background: linear-gradient(180deg, rgba(21,28,53,0.8), rgba(21,28,53,0.7));
+            border: 1px solid var(--bp-border);
+            border-radius: 14px;
+            padding: 10px 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        }
+        .message-input {
+            background: transparent;
+            color: var(--bp-text);
+            border-radius: 10px;
+        }
+        .icon-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--bp-border);
+            color: var(--bp-text);
+            cursor: pointer;
+            transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+        }
+        .icon-button:hover { background: rgba(255,255,255,0.09); border-color: rgba(108,139,255,0.45); transform: translateY(-1px); }
+        .icon-button.active { background: rgba(108,139,255,0.2); border-color: rgba(108,139,255,0.7); }
+        .send-button {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: linear-gradient(180deg, var(--bp-accent), var(--bp-accent-2));
+            border: none; color: white; cursor: pointer;
+            box-shadow: 0 6px 16px rgba(123,104,238,0.35);
+            transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+        }
+        .send-button:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(123,104,238,0.45); }
+        .attachments-preview {
+            display: none; /* becomes flex when items present */
+            gap: 8px; align-items: center; margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .attachment-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--bp-border); color: var(--bp-muted); }
+        .attachment-img { max-width: 220px; max-height: 140px; border-radius: 10px; border: 1px solid var(--bp-border); display: block; }
+        .message-content img.attachment-img { max-width: 100%; height: auto; }
+
+        /* Light mode overrides */
+        body:not([data-theme="dark"]) {
+            background: #f6f7fb;
+            color: #0c1222;
+        }
+        body:not([data-theme="dark"]) .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e8eaf3;
+            backdrop-filter: none;
+        }
+        body:not([data-theme="dark"]) .logo { color: #0c1222; }
+        body:not([data-theme="dark"]) .chat-messages {
+            background: #ffffff;
+            border: 1px solid #e5e7f0;
+            box-shadow: 0 4px 16px rgba(20, 30, 55, 0.08);
+        }
+        body:not([data-theme="dark"]) .message.bot .message-content {
+            background: #f7f8fc;
+            border: 1px solid #eceff6;
+        }
+        body:not([data-theme="dark"]) .message.user .message-content {
+            background: #eef3ff;
+            border: 1px solid #d7e2ff;
+            color: #0c1222; /* ensure readable text on light bubble */
+        }
+        body:not([data-theme="dark"]) .suggestion {
+            background: #ffffff;
+            border: 1px solid #e8eaf3;
+        }
+        body:not([data-theme="dark"]) .suggestion:hover {
+            border-color: #cfd5ea;
+            background: #f7f9ff;
+        }
+        body:not([data-theme="dark"]) .input-container { background: linear-gradient(180deg, rgba(246,247,251,0), #f6f7fb 60%); }
+        body:not([data-theme="dark"]) .input-wrapper {
+            background: #ffffff;
+            border: 1px solid #e5e7f0;
+            box-shadow: 0 6px 18px rgba(20, 30, 55, 0.08);
+        }
+        body:not([data-theme="dark"]) .message-input { color: #0c1222; }
+        body:not([data-theme="dark"]) .icon-button {
+            background: #f3f5fb;
+            border: 1px solid #e5e7f0;
+            color: #0c1222;
+        }
+        body:not([data-theme="dark"]) .icon-button:hover { background: #eef1f9; border-color: #cfd5ea; }
+        body:not([data-theme="dark"]) .icon-button.active { background: #e6edff; border-color: #9bb0ff; }
+        body:not([data-theme="dark"]) .attachments-preview .attachment-chip { background: #f3f6ff; border-color: #e0e6fb; color: #324166; }
+        body:not([data-theme="dark"]) .attachment-img { border-color: #e5e7f0; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <!-- Left side - Menu button -->
+        <div class="header-left">
+            <button class="menu-button" onclick="toggleMenu()" title="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/>
+                </svg>
+            </button>
+            <div class="menu-dropdown" id="menuDropdown">
+                <div class="menu-item" onclick="createNewChat()">
+                    <span class="menu-icon">�</span>
+                    New Chat
+                </div>
+                <div class="menu-item" onclick="showPastChats()">
+                    <span class="menu-icon">📝</span>
+                    Chat History
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="showSettings()">
+                    <span class="menu-icon">⚙️</span>
+                    Settings
+                </div>
+            </div>
+        </div>
+
+        <!-- Center - Logo -->
+        <div class="logo">�🚀 BizPilot AI</div>
+
+        <!-- Right side - Theme toggle and Profile -->
+        <div class="header-right">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙 Dark Mode</button>
+            <button class="profile-button" onclick="toggleProfile()" title="Profile">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                </svg>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-header">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-info">
+                        <div class="profile-name">{{ user.first_name|default:user.username }}</div>
+                        <div class="profile-email">{{ user.email }}</div>
+                    </div>
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="showProfile()">
+                    <span class="menu-icon">👤</span>
+                    View Profile
+                </div>
+                <div class="menu-item" onclick="showAccount()">
+                    <span class="menu-icon">⚙️</span>
+                    Account Settings
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="logout()">
+                    <span class="menu-icon">🚪</span>
+                    Logout
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h2>Welcome to BizPilot AI</h2>
+                <p>Your intelligent business assistant. How can I help you today?</p>
+                <div class="suggestions">
+                    <div class="suggestion" onclick="sendSuggestion('Help me create a business plan')">📋 Business Plan</div>
+                    <div class="suggestion" onclick="sendSuggestion('Market analysis for my startup')">📊 Market Analysis</div>
+                    <div class="suggestion" onclick="sendSuggestion('Financial projections help')">💰 Financial Help</div>
+                    <div class="suggestion" onclick="sendSuggestion('Marketing strategy ideas')">📈 Marketing Strategy</div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="avatar bot">🤖</div>
+                <div class="typing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="attachments-preview" id="attachmentsPreview"></div>
+            <div class="input-wrapper">
+                <button class="icon-button" id="attachButton" title="Attach image or PDF" onclick="triggerFilePicker()" aria-label="Attach">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5,6.5L7.5,15.5C6.12,16.88 6.12,19.12 7.5,20.5C8.88,21.88 11.12,21.88 12.5,20.5L21,12C23,10 23,6.5 21,4.5C19,2.5 15.5,2.5 13.5,4.5L5,13C3.9,14.1 3.9,15.9 5,17C6.1,18.1 7.9,18.1 9,17L17.5,8.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <textarea 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    rows="1"
+                    onkeydown="handleKeyPress(event)"
+                    oninput="autoResize(this)"
+                ></textarea>
+                <button class="icon-button" id="voiceButton" title="Voice input" onclick="toggleVoice()" aria-label="Voice">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0M12 19v3m-4 0h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="send-button" id="sendButton" onclick="sendMessage()" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+                <input type="file" id="fileInput" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="handleFileChange(event)" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let messageCount = 0;
+        let recognition = null;
+        let isListening = false;
+        
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeToggle.innerHTML = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function toggleMenu() {
+            const menuDropdown = document.getElementById('menuDropdown');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            // Close profile dropdown if open
+            profileDropdown.classList.remove('show');
+            
+            // Toggle menu dropdown
+            menuDropdown.classList.toggle('show');
+        }
+
+        function toggleProfile() {
+            const profileDropdown = document.getElementById('profileDropdown');
+            const menuDropdown = document.getElementById('menuDropdown');
+            
+            // Close menu dropdown if open
+            menuDropdown.classList.remove('show');
+            
+            // Toggle profile dropdown
+            profileDropdown.classList.toggle('show');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const menuButton = document.querySelector('.menu-button');
+            const profileButton = document.querySelector('.profile-button');
+            const menuDropdown = document.getElementById('menuDropdown');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
+                menuDropdown.classList.remove('show');
+            }
+            
+            if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        // Menu functions
+        function createNewChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="welcome-message">
+                    <h2>Welcome to BizPilot AI</h2>
+                    <p>Your intelligent business assistant. How can I help you today?</p>
+                    <div class="suggestions">
+                        <div class="suggestion" onclick="sendSuggestion('Help me create a business plan')">📋 Business Plan</div>
+                        <div class="suggestion" onclick="sendSuggestion('Market analysis for my startup')">📊 Market Analysis</div>
+                        <div class="suggestion" onclick="sendSuggestion('Financial projections help')">💰 Financial Help</div>
+                        <div class="suggestion" onclick="sendSuggestion('Marketing strategy ideas')">📈 Marketing Strategy</div>
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="avatar bot">🤖</div>
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('menuDropdown').classList.remove('show');
+        }
+
+        function showPastChats() {
+            alert('Past chats feature coming soon!');
+            document.getElementById('menuDropdown').classList.remove('show');
+        }
+
+        function showSettings() {
+            alert('Settings panel coming soon!');
+            document.getElementById('menuDropdown').classList.remove('show');
+        }
+
+        // Profile functions
+        function showProfile() {
+            alert('Profile page coming soon!');
+            document.getElementById('profileDropdown').classList.remove('show');
+        }
+
+        function showAccount() {
+            alert('Account settings coming soon!');
+            document.getElementById('profileDropdown').classList.remove('show');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    localStorage.removeItem('authToken');
+                } catch (e) {}
+                alert('Logout functionality coming soon!');
+            }
+            document.getElementById('profileDropdown').classList.remove('show');
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '☀️ Light Mode';
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            hideWelcomeMessage();
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            try {
+                const reply = await sendToBackend(message);
+                hideTypingIndicator();
+                addMessage(reply, 'bot');
+            } catch (e) {
+                hideTypingIndicator();
+                addMessage('Sorry, the server is unavailable. Please try again.', 'bot');
+            }
+        }
+
+        async function sendSuggestion(suggestion) {
+            hideWelcomeMessage();
+            addMessage(suggestion, 'user');
+            
+            showTypingIndicator();
+            try {
+                const reply = await sendToBackend(suggestion);
+                hideTypingIndicator();
+                addMessage(reply, 'bot');
+            } catch (e) {
+                hideTypingIndicator();
+                addMessage('Sorry, the server is unavailable. Please try again.', 'bot');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${sender}`;
+            avatar.textContent = sender === 'user' ? '👤' : '🤖';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            content.textContent = text;
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addAttachmentMessage(file) {
+            hideWelcomeMessage();
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar user';
+            avatar.textContent = '👤';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'attachment-img';
+                img.alt = file.name;
+                img.src = URL.createObjectURL(file);
+                content.appendChild(img);
+                const caption = document.createElement('div');
+                caption.style.marginTop = '6px';
+                caption.style.opacity = '0.8';
+                caption.textContent = file.name + ' • ' + formatBytes(file.size);
+                content.appendChild(caption);
+            } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(file);
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.className = 'attachment-chip';
+                link.textContent = file.name + ' (' + formatBytes(file.size) + ')';
+                content.appendChild(link);
+            } else {
+                const chip = document.createElement('div');
+                chip.className = 'attachment-chip';
+                chip.textContent = file.name + ' (' + formatBytes(file.size) + ')';
+                content.appendChild(chip);
+            }
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function formatBytes(bytes) {
+            const sizes = ['B','KB','MB','GB'];
+            if (bytes === 0) return '0 B';
+            const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), sizes.length - 1);
+            return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + sizes[i];
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.add('show');
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.remove('show');
+        }
+
+        function hideWelcomeMessage() {
+            const welcome = document.querySelector('.welcome-message');
+            if (welcome) {
+                welcome.style.display = 'none';
+            }
+        }
+
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendToBackend(message) {
+            const resp = await fetch('http://localhost:8000/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            if (!resp.ok) throw new Error('Bad response');
+            const data = await resp.json();
+            return data.reply || 'Thanks! (no response)';
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', initializeTheme);
+
+        // Focus input on page load
+        window.addEventListener('load', () => {
+            document.getElementById('messageInput').focus();
+        });
+
+        // Attachments handlers
+        function triggerFilePicker() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileChange(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+            const preview = document.getElementById('attachmentsPreview');
+            preview.innerHTML = '';
+            files.forEach(file => {
+                const item = document.createElement('div');
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.className = 'attachment-img';
+                    img.src = URL.createObjectURL(file);
+                    img.alt = file.name;
+                    item.appendChild(img);
+                } else {
+                    const chip = document.createElement('div');
+                    chip.className = 'attachment-chip';
+                    chip.textContent = file.name + ' (' + formatBytes(file.size) + ')';
+                    item.appendChild(chip);
+                }
+                preview.appendChild(item);
+                // Immediately add to chat for this demo
+                addAttachmentMessage(file);
+            });
+            preview.style.display = 'flex';
+            // Clear selection to allow same file again
+            event.target.value = '';
+        }
+
+        // Voice input (Web Speech API where available)
+        function setupRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                const input = document.getElementById('messageInput');
+                input.value = transcript;
+                autoResize(input);
+            };
+            recognition.onend = () => {
+                isListening = false;
+                const btn = document.getElementById('voiceButton');
+                btn.classList.remove('active');
+                btn.title = 'Voice input';
+            };
+        }
+
+        function toggleVoice() {
+            const btn = document.getElementById('voiceButton');
+            if (!recognition) {
+                alert('Voice input is not supported in this browser.');
+                return;
+            }
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                btn.classList.remove('active');
+                btn.title = 'Voice input';
+            } else {
+                recognition.start();
+                isListening = true;
+                btn.classList.add('active');
+                btn.title = 'Listening... click to stop';
+            }
+        }
+
+        // Initialize voice on ready
+        document.addEventListener('DOMContentLoaded', setupRecognition);
+    </script>
+</body>
+</html>
